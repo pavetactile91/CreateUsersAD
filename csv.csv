@@ -1,0 +1,4 @@
+FirstName,LastName,Username,UserPrincipalName,Email,Alias1,Alias2,Phone,Service,Fonction,Pays,Password,Manager
+Stephen,Strange,sstrange,sstrange@example.com,sstrange@example.com,sstrange.alias1@example.com,sstrange.alias2@example.com,098-123-4567,Magic,Sorcerer,USA,P@ssw0rd123,Lucas Martinez
+Carol,Danvers,cdanvers,cdanvers@example.com,cdanvers@example.com,cdanvers.alias1@example.com,cdanvers.alias2@example.com,543-210-7654,AirForce,Captain,USA,P@ssw0rd123,Lucas Martinez
+Tony,Stark,tstark,tstark@example.com,tstark@example.com,tstark.alias1@example.com,tstark.alias2@example.com,321-654-9870,Technology,CEO,USA,P@ssw0rd123,Lucas Martinez

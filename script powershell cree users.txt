@@ -1,0 +1,79 @@
+# Charger le module Active Directory
+Import-Module ActiveDirectory
+
+# Chemin du fichier CSV (modifiez si nécessaire)
+$CSVPath = "C:\Users\lucas\Desktop\user.csv"
+
+# Base DN pour les utilisateurs (à adapter à votre environnement)
+$BaseDN = "OU=utilisateur,OU=L2A,DC=L2A,DC=local" # Remplacez par votre DN
+
+# Vérification si le fichier CSV existe
+if (-Not (Test-Path $CSVPath)) {
+    Write-Error "Le fichier CSV $CSVPath n'existe pas. Veuillez vérifier le chemin."
+    exit
+}
+
+# Lecture du fichier CSV
+$Users = Import-Csv -Path $CSVPath
+
+# Boucle pour créer des utilisateurs
+foreach ($User in $Users) {
+    try {
+        # Extraction des informations depuis le fichier CSV
+        $FirstName = $User.FirstName
+        $LastName = $User.LastName
+        $DisplayName = "$FirstName $LastName"
+        $Username = $User.Username
+        $UserPrincipalName = $User.UserPrincipalName
+        $Email = $User.Email
+        $Alias1 = $User.Alias1
+        $Alias2 = $User.Alias2
+        $Phone = $User.Phone
+        $Service = $User.Service
+        $Fonction = $User.Fonction
+        $Pays = $User.Pays
+        $Password = $User.Password | ConvertTo-SecureString -AsPlainText -Force
+        $ManagerCN = $User.Manager  # Manager spécifié dans le CSV
+
+        # Récupérer les informations du manager à partir du CN
+        $Manager = Get-ADUser -Filter {CN -eq $ManagerCN} -Properties DistinguishedName
+
+        # Vérifier si le manager existe dans Active Directory
+        if ($Manager) {
+            $ManagerDN = $Manager.DistinguishedName
+            Write-Host "Manager $ManagerCN trouvé, DN : $ManagerDN"
+        } else {
+            Write-Error "Manager $ManagerCN non trouvé pour l'utilisateur $Username."
+            continue
+        }
+
+        # Création de l'utilisateur
+        New-ADUser -Name $DisplayName `
+                   -SamAccountName $Username `
+                   -UserPrincipalName $UserPrincipalName `
+                   -GivenName $FirstName `
+                   -Surname $LastName `
+                   -DisplayName $DisplayName `
+                   -Path $BaseDN `
+                   -AccountPassword $Password `
+                   -Enabled $true `
+                   -EmailAddress $Email `
+                   -OfficePhone $Phone `
+                   -Title $Fonction `
+                   -Department $Service `
+                   -Country $Pays `
+                   -ChangePasswordAtLogon $false `
+                   -OtherAttributes @{'proxyAddresses'=@("smtp:$Alias1","smtp:$Alias2")}
+
+        Write-Host "Utilisateur $Username créé avec succès."
+
+        # Attribuer le manager à l'utilisateur créé
+        Set-ADUser -Identity $Username -Manager $ManagerDN
+        Write-Host "Manager $ManagerCN attribué à l'utilisateur $Username."
+
+    } catch {
+        Write-Error "Erreur lors de la création de l'utilisateur $($User.Username) : $_"
+    }
+}
+
+Write-Host "Tous les utilisateurs du fichier CSV ont été traités."
